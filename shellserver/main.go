@@ -11,11 +11,12 @@ func main() {
 	vk := client.SetEntityFromEnvironOrExit()
 	client.OverrideAutoChainTo(true)
 
-	server := server.NewServerService(client, vk, "gabe.pantry/terminals")
+	server := server.NewServerService(client, vk, "gabe.pantry/terminals", "/bin/bash")
 	err := server.AddTerminal("0")
 	if err != nil {
 		log.Fatal(err)
 	}
 	x := make(chan bool)
 	<-x
+	log.Println("EXITING SERVEr")
 }

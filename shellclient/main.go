@@ -2,24 +2,18 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/gtfierro/shellintheghost/client"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
 	"log"
 	"os"
 )
 
-func printme(s string) {
-	//fmt.Println("GOT")
-	fmt.Print(s)
-}
-
 func main() {
 	cl := bw2.ConnectOrExit("")
 	vk := cl.SetEntityFromEnvironOrExit()
 	cl.OverrideAutoChainTo(true)
 
-	terminal, err := client.NewClient(cl, vk, "gabe.pantry/terminals/s.shell/_/i.term/slot/0", printme)
+	terminal, err := client.NewClient(cl, vk, "gabe.pantry/terminals/s.shell/_/i.term/slot/0", os.Stdout)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +23,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := terminal.Write(append([]byte(line), '\n')); err != nil {
+		if err := terminal.Write([]byte(line)); err != nil {
 			log.Fatal(err)
 		}
 	}
