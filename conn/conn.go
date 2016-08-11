@@ -5,7 +5,7 @@
 package conn
 
 import (
-	//"fmt"
+	"github.com/gtfierro/shellintheghost/ponum"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
 	"time"
 )
@@ -39,12 +39,11 @@ type Conn struct {
 }
 
 func (c *Conn) Read(p []byte) (n int, err error) {
-	//fmt.Println("reading")
 	msg := <-c.read
 	//msg.Dump()
 	// unpack message using Blob 1.0.0.0
 	// right now just grabs the first 1.0.0.0 PO
-	po := msg.GetOnePODF(bw2.PODFBlob)
+	po := msg.GetOnePODF(ponum.PODFShellRaw)
 	// get byte contents of PO
 	if po == nil {
 		return 0, nil
@@ -52,7 +51,6 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	contents := po.GetContents()
 	// copy into return slice
 	copy(p, contents)
-	//fmt.Printf("READ>", string(p))
 	return len(contents), nil
 
 }
@@ -61,12 +59,10 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	po, err := bw2.LoadPayloadObject(bw2.FromDotForm(bw2.PODFBlob), p)
+	po, err := bw2.LoadPayloadObject(bw2.FromDotForm(ponum.PODFShellRaw), p)
 	if err != nil {
 		return 0, err
 	}
-	//fmt.Printf("WRITE>", string(p))
-	//fmt.Println("Writing", string(p), "|")
 	err = c.client.Publish(&bw2.PublishParams{
 		URI:            c.write,
 		AutoChain:      true,
