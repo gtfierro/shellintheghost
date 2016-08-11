@@ -1,2 +1,5 @@
 shellclient/shellclient
 shellserver/shellserver
+
+*/.bw2bind.log
+.bw2bind.log
