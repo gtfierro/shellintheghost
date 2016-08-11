@@ -76,6 +76,14 @@ func (s *Server) AddTerminal(slotname string) error {
 			fmt.Println("ERR>", err)
 			psty.Close()
 		}
+		err = c.Wait()
+		if err != nil {
+			//TODO: stop forwarding signals
+			//TODO: send the halt signal to the client
+			fmt.Println("ERR>", err)
+			psty.Close()
+		}
+		fmt.Println("Exiting server shell")
 	}()
 	return nil
 }
