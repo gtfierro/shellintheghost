@@ -62,28 +62,24 @@ func (s *Server) AddTerminal(slotname string) error {
 	go io.Copy(psty, conn)
 	go io.Copy(conn, psty)
 
-	c := exec.Command(s.command)
-	c.Stdin = tty
-	c.Stdout = tty
-	c.Stderr = tty
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Setctty: true,
-		Setsid:  true,
-	}
-	go func() {
+	for {
+		c := exec.Command(s.command)
+		c.Stdin = tty
+		c.Stdout = tty
+		c.Stderr = tty
+		c.SysProcAttr = &syscall.SysProcAttr{
+			Setctty: true,
+			Setsid:  true,
+		}
 		err := c.Start()
 		if err != nil {
 			fmt.Println("ERR>", err)
-			psty.Close()
 		}
 		err = c.Wait()
 		if err != nil {
-			//TODO: stop forwarding signals
-			//TODO: send the halt signal to the client
 			fmt.Println("ERR>", err)
-			psty.Close()
 		}
-		fmt.Println("Exiting server shell")
-	}()
+		conn.Leave()
+	}
 	return nil
 }
