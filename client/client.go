@@ -14,6 +14,7 @@ type Client struct {
 	conn   *conn.Conn
 	term   *terminal.Terminal
 	output io.Writer
+	Closed chan bool
 }
 
 // given a URI of form "/a/b/c/key", returns key
@@ -31,6 +32,7 @@ func NewClient(client *bw2.BW2Client, vk, termURI string, output io.Writer) (*Cl
 	c := &Client{
 		client: client,
 		output: output,
+		Closed: make(chan bool),
 	}
 	termName := getURIKey(termURI)
 	base := strings.TrimSuffix(termURI, "slot/"+termName)
@@ -41,26 +43,22 @@ func NewClient(client *bw2.BW2Client, vk, termURI string, output io.Writer) (*Cl
 	if err != nil {
 		return nil, err
 	}
+
 	c.conn = conn.NewConn(client, vk, termURI, sub)
-	go io.Copy(c.output, c.conn)
+
+	go func() {
+		io.Copy(c.output, c.conn)
+		c.Closed <- true
+	}()
 	return c, nil
 }
 
-func (c *Client) Write(b []byte) error {
-	_, err := c.conn.Write(b)
-	return err
+func (c *Client) Write(b []byte) (int, error) {
+	return c.conn.Write(b)
 }
 
-type term struct {
-	c *conn.Conn
-}
-
-func (t *term) Read(b []byte) (int, error) {
-	fmt.Println("Read input %s", b)
-	return t.c.Write(b)
-}
-
-func (t *term) Write(b []byte) (int, error) {
-	fmt.Println("Write output %s", b)
-	return t.c.Read(b)
+func (c *Client) Read(b []byte) (int, error) {
+	//return c.conn.Read(b)
+	fmt.Println("from term", string(b))
+	return len(b), nil
 }
