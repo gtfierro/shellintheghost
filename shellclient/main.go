@@ -10,6 +10,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatal("Usage: ./shellclient <terminal slot uri>")
+	}
 	cl := bw2.ConnectOrExit("")
 	vk := cl.SetEntityFromEnvironOrExit()
 	cl.OverrideAutoChainTo(true)
@@ -20,7 +23,7 @@ func main() {
 	}
 	defer terminal.Restore(0, oldState)
 
-	term, err := client.NewClient(cl, vk, "gabe.pantry/terminals/s.shell/_/i.term/slot/0", os.Stdout)
+	term, err := client.NewClient(cl, vk, os.Args[1], os.Stdout)
 	if err != nil {
 		log.Fatal(err)
 	}
