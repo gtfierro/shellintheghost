@@ -1,11 +1,11 @@
 package client
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/gtfierro/shellintheghost/conn"
 	"golang.org/x/crypto/ssh/terminal"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
+	"io"
 	"strings"
 )
 
@@ -13,6 +13,7 @@ type Client struct {
 	client *bw2.BW2Client
 	conn   *conn.Conn
 	term   *terminal.Terminal
+	output io.Writer
 }
 
 // given a URI of form "/a/b/c/key", returns key
@@ -25,10 +26,11 @@ func getURIKey(uri string) string {
 }
 
 // termURI is the slot URI
-func NewClient(client *bw2.BW2Client, vk, termURI string, handleOutput func(string)) (*Client, error) {
+func NewClient(client *bw2.BW2Client, vk, termURI string, output io.Writer) (*Client, error) {
 	fmt.Println("Client write to", termURI)
 	c := &Client{
 		client: client,
+		output: output,
 	}
 	termName := getURIKey(termURI)
 	base := strings.TrimSuffix(termURI, "slot/"+termName)
@@ -40,32 +42,7 @@ func NewClient(client *bw2.BW2Client, vk, termURI string, handleOutput func(stri
 		return nil, err
 	}
 	c.conn = conn.NewConn(client, vk, termURI, sub)
-	go func() {
-		r := bufio.NewReader(c.conn)
-		for {
-			line, err := r.ReadString('\n')
-			if err != nil {
-				fmt.Println("ERR", err)
-				break
-			}
-			//fmt.Println("client read", line)
-			handleOutput(line)
-		}
-	}()
-	//t := &term{c.conn}
-	//c.term = terminal.NewTerminal(t, "")
-	//go func() {
-	//	defer c.conn.Close()
-	//	for {
-	//		line, err := c.term.ReadLine()
-	//		if err != nil {
-	//			fmt.Println(err)
-	//			break
-	//		}
-	//		fmt.Println("client read", line)
-	//		handleOutput(line)
-	//	}
-	//}()
+	go io.Copy(c.output, c.conn)
 	return c, nil
 }
 
