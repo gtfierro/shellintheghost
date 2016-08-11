@@ -16,25 +16,30 @@ package server
 import (
 	"fmt"
 	"github.com/gtfierro/shellintheghost/conn"
+	"github.com/kr/pty"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
+	"io"
 	"os/exec"
+	"syscall"
 )
 
 type Server struct {
-	client *bw2.BW2Client
-	vk     string
-	svc    *bw2.Service
-	iface  *bw2.Interface
+	client  *bw2.BW2Client
+	vk      string
+	svc     *bw2.Service
+	iface   *bw2.Interface
+	command string
 }
 
-func NewServerService(client *bw2.BW2Client, vk, uri string) *Server {
+func NewServerService(client *bw2.BW2Client, vk, uri, command string) *Server {
 	svc := client.RegisterService(uri, "s.shell")
 	iface := svc.RegisterInterface("_", "i.term")
 	return &Server{
-		client: client,
-		svc:    svc,
-		iface:  iface,
-		vk:     vk,
+		client:  client,
+		svc:     svc,
+		iface:   iface,
+		vk:      vk,
+		command: command,
 	}
 }
 
@@ -49,10 +54,28 @@ func (s *Server) AddTerminal(slotname string) error {
 	}
 	conn := conn.NewConn(s.client, s.vk, s.iface.SignalURI(slotname), sub)
 
-	c := exec.Command("/bin/bash")
-	c.Stdin = conn
-	c.Stdout = conn
-	c.Stderr = conn
-	go c.Run()
+	psty, tty, err := pty.Open()
+	if err != nil {
+		return err
+	}
+
+	go io.Copy(psty, conn)
+	go io.Copy(conn, psty)
+
+	c := exec.Command(s.command)
+	c.Stdin = tty
+	c.Stdout = tty
+	c.Stderr = tty
+	c.SysProcAttr = &syscall.SysProcAttr{
+		Setctty: true,
+		Setsid:  true,
+	}
+	go func() {
+		err := c.Start()
+		if err != nil {
+			fmt.Println("ERR>", err)
+			psty.Close()
+		}
+	}()
 	return nil
 }

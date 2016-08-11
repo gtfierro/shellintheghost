@@ -52,6 +52,7 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	contents := po.GetContents()
 	// copy into return slice
 	copy(p, contents)
+	//fmt.Printf("READ>", string(p))
 	return len(contents), nil
 
 }
@@ -64,6 +65,7 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
+	//fmt.Printf("WRITE>", string(p))
 	//fmt.Println("Writing", string(p), "|")
 	err = c.client.Publish(&bw2.PublishParams{
 		URI:            c.write,
