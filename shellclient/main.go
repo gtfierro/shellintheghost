@@ -1,9 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"github.com/gtfierro/shellintheghost/client"
+	"golang.org/x/crypto/ssh/terminal"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
+	"io"
 	"log"
 	"os"
 )
@@ -13,18 +14,19 @@ func main() {
 	vk := cl.SetEntityFromEnvironOrExit()
 	cl.OverrideAutoChainTo(true)
 
-	terminal, err := client.NewClient(cl, vk, "gabe.pantry/terminals/s.shell/_/i.term/slot/0", os.Stdout)
+	oldState, err := terminal.MakeRaw(0)
+	if err != nil {
+		panic(err)
+	}
+	defer terminal.Restore(0, oldState)
+
+	term, err := client.NewClient(cl, vk, "gabe.pantry/terminals/s.shell/_/i.term/slot/0", os.Stdout)
 	if err != nil {
 		log.Fatal(err)
 	}
-	in := bufio.NewReader(os.Stdin)
-	for {
-		line, err := in.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := terminal.Write([]byte(line)); err != nil {
-			log.Fatal(err)
-		}
-	}
+
+	shell := terminal.NewTerminal(term, "")
+
+	go io.Copy(shell, os.Stdin)
+	<-term.Closed
 }
