@@ -7,6 +7,7 @@ package conn
 import (
 	"github.com/gtfierro/shellintheghost/ponum"
 	bw2 "gopkg.in/immesys/bw2bind.v5"
+	"io"
 	"time"
 )
 
@@ -28,6 +29,7 @@ func NewConn(client *bw2.BW2Client, vk, write string, read chan *bw2.SimpleMessa
 		write:  write,
 		read:   read,
 		vk:     vk,
+		closed: false,
 	}
 }
 
@@ -36,16 +38,29 @@ type Conn struct {
 	vk     string
 	write  string
 	read   chan *bw2.SimpleMessage
+	closed bool
+}
+
+func (c *Conn) isLogoutMessage(msg *bw2.SimpleMessage) bool {
+	return msg.GetOnePODF(ponum.PODFShellLogout) != nil
 }
 
 func (c *Conn) Read(p []byte) (n int, err error) {
+	if c.closed || c.read == nil {
+		return 0, io.EOF
+	}
 	msg := <-c.read
-	//msg.Dump()
+	if msg == nil {
+		return 0, io.EOF
+	}
 	// unpack message using Blob 1.0.0.0
 	// right now just grabs the first 1.0.0.0 PO
 	po := msg.GetOnePODF(ponum.PODFShellRaw)
 	// get byte contents of PO
 	if po == nil {
+		if c.isLogoutMessage(msg) {
+			return 0, c.Close()
+		}
 		return 0, nil
 	}
 	contents := po.GetContents()
@@ -73,8 +88,21 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 }
 
 func (c *Conn) Close() error {
-	close(c.read)
-	return nil
+	c.closed = true
+	return io.EOF
+}
+
+func (c *Conn) Leave() error {
+	// send the logout signal
+	po, err := bw2.LoadPayloadObject(bw2.FromDotForm(ponum.PODFShellLogout), []byte("bye!"))
+	if err != nil {
+		return err
+	}
+	return c.client.Publish(&bw2.PublishParams{
+		URI:            c.write,
+		AutoChain:      true,
+		PayloadObjects: []bw2.PayloadObject{po},
+	})
 }
 
 func (c *Conn) LocalAddr() Addr {
