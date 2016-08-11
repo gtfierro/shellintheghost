@@ -6,9 +6,9 @@ const (
 	PODFShellRaw     = `0.1.0.0`
 	PODFMaskShellRaw = `0.1.0.0/32`
 
-	PODFShellSignal     = `0.1.0.1`
-	PODFMaskShellSignal = `0.1.0.1/32`
+	PODFShellLogout     = `0.1.0.1`
+	PODFMaskShellLogout = `0.1.0.1/32`
 
 	PONumShellRaw    = 65536
-	PONumShellSignal = 65537
+	PONumShellLogout = 65537
 )
