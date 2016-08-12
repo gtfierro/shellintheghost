@@ -9,6 +9,10 @@ const (
 	PODFShellLogout     = `0.1.0.1`
 	PODFMaskShellLogout = `0.1.0.1/32`
 
+	PODFShellSize     = `0.1.0.2`
+	PODFMaskShellSize = `0.1.0.2/32`
+
 	PONumShellRaw    = 65536
 	PONumShellLogout = 65537
+	PONumShellSize   = 65538
 )

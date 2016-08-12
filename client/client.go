@@ -58,7 +58,5 @@ func (c *Client) Write(b []byte) (int, error) {
 }
 
 func (c *Client) Read(b []byte) (int, error) {
-	//return c.conn.Read(b)
-	fmt.Println("from term", string(b))
 	return len(b), nil
 }
