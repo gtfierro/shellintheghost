@@ -8,14 +8,14 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("Usage: ./shellserver <base svc uri>")
+	if len(os.Args) < 3 {
+		log.Fatal("Usage: ./shellserver <base svc uri> <path to shell>")
 	}
 	client := bw2.ConnectOrExit("")
 	vk := client.SetEntityFromEnvironOrExit()
 	client.OverrideAutoChainTo(true)
 
-	server := server.NewServerService(client, vk, os.Args[1], "/bin/bash")
+	server := server.NewServerService(client, vk, os.Args[1], os.Args[2])
 	err := server.AddTerminal("0")
 	if err != nil {
 		log.Fatal(err)
