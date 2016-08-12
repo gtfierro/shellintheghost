@@ -26,7 +26,7 @@ shellintheghost server -u scratch.ns/terminals -t gabe
 ```
 
 This will create a terminal at `scratch.ns/terminals/s.shell/_/i.term/slot/gabe` with corresponding output at 
-`scratch.ns/terminals/s.shell/_/i.term/signal/gabe`
+`scratch.ns/terminals/s.shell/_/i.term/signal/gabe`. Additional terminals can be created with more instances of the `-t`  flag.
 
 Servers can expose whatever shell they want. The default is `/bin/bash`, but using the `-s` flag you can specify 
 `/usr/bin/python` or `which supervisorctl` or whatever you want.
